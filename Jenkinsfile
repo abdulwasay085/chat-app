@@ -2,56 +2,30 @@ pipeline {
     agent { label 'docker' }
 
     environment {
-        // 💡 Registry URL (Docker Hub ke liye blank ya docker.io/username likh do)
-        REGISTRY = 'docker.io/abdulwasay064' // 👈️ Apni Docker Hub username se replace karo
-
-        // 💡 Image name & tag
-        IMAGE_NAME = 'chat-frontend'
-        IMAGE_TAG = 'latest'
-
-        // 💡 Jenkins credentials IDs
-        DOCKER_USERNAME = credentials('docker-username')
-        DOCKER_PASSWORD = credentials('docker-password')
+        IMAGE_NAME = 'chat-app'
     }
 
     stages {
-        stage('Checkout Code') {
+        stage('Build') {
             steps {
-                git 'https://github.com/your-username/your-react-repo.git'
+                sh 'docker build -t $IMAGE_NAME .'
             }
         }
 
-        stage('Install Dependencies & Build App') {
+        stage('Push to Docker Hub') {
             steps {
-                sh 'npm install'
-                sh 'npm run build'
-            }
-        }
-
-        stage('Build Docker Image') {
-            steps {
-                sh "docker build -t $REGISTRY/$IMAGE_NAME:$IMAGE_TAG ."
-            }
-        }
-
-        stage('Login to Registry') {
-            steps {
-                script {
-                    sh "echo $DOCKER_PASSWORD | docker login $REGISTRY -u $DOCKER_USERNAME --password-stdin"
+                withCredentials([usernamePassword(
+                  credentialsId: 'dockerhub-creds',
+                  usernameVariable: 'DOCKER_USER',
+                  passwordVariable: 'DOCKER_PASS')]) {
+                  
+                  sh '''
+                    echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                    docker tag $IMAGE_NAME $DOCKER_USER/$IMAGE_NAME:latest
+                    docker push $DOCKER_USER/$IMAGE_NAME:latest
+                  '''
                 }
             }
-        }
-
-        stage('Push Docker Image') {
-            steps {
-                sh "docker push $REGISTRY/$IMAGE_NAME:$IMAGE_TAG"
-            }
-        }
-    }
-
-    post {
-        always {
-            sh 'docker logout'
         }
     }
 }

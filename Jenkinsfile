@@ -2,28 +2,45 @@ pipeline {
     agent { label 'docker' }
 
     environment {
-        IMAGE_NAME = 'chat-app'
+        REGISTRY = 'docker.io/abdulwasay064'
+        IMAGE_NAME = 'chat-frontend'
+        IMAGE_TAG = 'latest'
     }
 
     stages {
-        stage('Build') {
+        stage('Checkout Code') {
             steps {
-                sh 'docker build -t $IMAGE_NAME .'
+                git 'https://github.com/abdulwasay085/chat-app.git'
             }
         }
 
-        stage('Push to Docker Hub') {
+        stage('Install Dependencies & Build App') {
             steps {
-                withCredentials([usernamePassword(
-                  credentialsId: 'dockerhub-creds',
-                  usernameVariable: 'DOCKER_USER',
-                  passwordVariable: 'DOCKER_PASS')]) {
-                  
-                  sh '''
-                    echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                    docker tag $IMAGE_NAME $DOCKER_USER/$IMAGE_NAME:latest
-                    docker push $DOCKER_USER/$IMAGE_NAME:latest
-                  '''
+                bat 'npm install'
+                bat 'npm run build'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                bat "docker build -t %REGISTRY%/%IMAGE_NAME%:%IMAGE_TAG% ."
+            }
+        }
+
+        stage('Login and Push to Docker Hub') {
+            steps {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'dockerhub-creds',
+                        usernameVariable: 'DOCKER_USERNAME',
+                        passwordVariable: 'DOCKER_PASSWORD'
+                    )
+                ]) {
+                    bat '''
+                        echo %DOCKER_PASSWORD% | docker login %REGISTRY% -u %DOCKER_USERNAME% --password-stdin
+                        docker push %REGISTRY%/%IMAGE_NAME%:%IMAGE_TAG%
+                        docker logout %REGISTRY%
+                    '''
                 }
             }
         }

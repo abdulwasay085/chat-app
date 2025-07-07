@@ -2,9 +2,13 @@ pipeline {
     agent { label 'docker' }
 
     environment {
-        REGISTRY = 'docker.io/abdulwasay064'
-        IMAGE_NAME = 'chat-frontend'
-        IMAGE_TAG = 'latest'
+        // Docker image ka naam
+        IMAGE_NAME = 'abdulwasay064/chat-app'
+        IMAGE_TAG  = 'latest'
+
+        // Jenkins me banaye gaye credentials ke IDs
+        DOCKER_USERNAME = credentials('docker-username')
+        DOCKER_PASSWORD = credentials('docker-password')
     }
 
     stages {
@@ -23,26 +27,28 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                bat "docker build -t %REGISTRY%/%IMAGE_NAME%:%IMAGE_TAG% ."
+                bat "docker build -t %IMAGE_NAME%:%IMAGE_TAG% ."
             }
         }
 
-        stage('Login and Push to Docker Hub') {
+        stage('Login to Docker Hub') {
             steps {
-                withCredentials([
-                    usernamePassword(
-                        credentialsId: 'dockerhub-creds',
-                        usernameVariable: 'DOCKER_USERNAME',
-                        passwordVariable: 'DOCKER_PASSWORD'
-                    )
-                ]) {
-                    bat '''
-                        echo %DOCKER_PASSWORD% | docker login %REGISTRY% -u %DOCKER_USERNAME% --password-stdin
-                        docker push %REGISTRY%/%IMAGE_NAME%:%IMAGE_TAG%
-                        docker logout %REGISTRY%
-                    '''
-                }
+                bat """
+                    echo %DOCKER_PASSWORD% | docker login -u %DOCKER_USERNAME% --password-stdin
+                """
             }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                bat "docker push %IMAGE_NAME%:%IMAGE_TAG%"
+            }
+        }
+    }
+
+    post {
+        always {
+            bat 'docker logout'
         }
     }
 }

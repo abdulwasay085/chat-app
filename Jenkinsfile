@@ -30,9 +30,7 @@ pipeline {
 
     post {
         always {
-            node {
-                bat 'docker logout'
-            }
+            bat 'docker logout'
         }
     }
 }

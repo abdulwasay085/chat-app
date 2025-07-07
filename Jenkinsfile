@@ -1,53 +1,38 @@
 pipeline {
-    agent { label 'docker' }
-
-    environment {
-        IMAGE_NAME = 'abdulwasay085/myreactapp'
-        IMAGE_TAG  = 'latest'
-
-        DOCKER_USERNAME = credentials('docker-username')
-        DOCKER_PASSWORD = credentials('docker-password')
-    }
+    agent any
 
     stages {
-        stage('Checkout Code') {
+        stage('Checkout') {
             steps {
-                git 'https://github.com/abdulwasay085/chat-app.git'
-            }
-        }
-
-        stage('Install Dependencies & Build App') {
-            steps {
-                bat 'npm install'
-                bat 'npm run build'
+                git credentialsId: 'abdulwasay064', url: 'https://github.com/abdulwasay085/chat-app.git'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                bat "docker build -t %IMAGE_NAME%:%IMAGE_TAG% ."
-            }
-        }
-
-        stage('Login to Docker Hub') {
-            steps {
-                bat """
-                    echo %DOCKER_PASSWORD% | docker login -u %DOCKER_USERNAME% --password-stdin
-                """
+                script {
+                    bat 'docker build -t abdulwasay085/chat-app:latest .'
+                }
             }
         }
 
         stage('Push Docker Image') {
             steps {
-                bat "docker push %IMAGE_NAME%:%IMAGE_TAG%"
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'abdulwasay064', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                        bat "docker login -u %DOCKER_USERNAME% -p %DOCKER_PASSWORD%"
+                        bat "docker push abdulwasay085/chat-app:latest"
+                    }
+                }
             }
         }
     }
 
-post {
-    always {
-        node {
-            bat 'docker logout'
+    post {
+        always {
+            node {
+                bat 'docker logout'
+            }
         }
     }
 }

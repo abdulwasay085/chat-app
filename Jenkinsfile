@@ -8,13 +8,15 @@ pipeline {
             }
         }
 
-        stage('Build Docker Image') {
-            steps {
-                script {
-                    bat 'docker build -t abdulwasay085/chat-app:latest .'
-                }
-            }
+       stage('Build Docker Image') {
+    steps {
+        script {
+            // Docker daemon check
+            bat 'docker info'
+            bat 'docker build -t abdulwasay085/chat-app:latest .'
         }
+    }
+}
 
         stage('Push Docker Image') {
             steps {

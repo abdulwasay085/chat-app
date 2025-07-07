@@ -45,10 +45,8 @@ pipeline {
     }
 
     post {
-        always {
-            node {
-                bat 'docker logout'
-            }
-        }
+    always {
+        bat 'docker logout'
     }
+}
 }

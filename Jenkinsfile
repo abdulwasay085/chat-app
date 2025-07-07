@@ -2,11 +2,9 @@ pipeline {
     agent { label 'docker' }
 
     environment {
-        // Docker image ka naam
-        IMAGE_NAME = 'abdulwasay064/chat-app'
+        IMAGE_NAME = 'abdulwasay085/myreactapp'
         IMAGE_TAG  = 'latest'
 
-        // Jenkins me banaye gaye credentials ke IDs
         DOCKER_USERNAME = credentials('docker-username')
         DOCKER_PASSWORD = credentials('docker-password')
     }
@@ -46,9 +44,8 @@ pipeline {
         }
     }
 
-   post {
-    always {
-        node {
+    post {
+        always {
             bat 'docker logout'
         }
     }

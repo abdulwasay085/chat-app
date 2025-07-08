@@ -15,12 +15,12 @@ pipeline {
         }
         stage('Build Docker Image') {
             steps {
-                bat 'docker build -t abdulwasay085/chat-app:latest .'
+                bat 'docker build -t abdulwasay064/chat-app:latest .'
             }
         }
         stage('Push Docker Image') {
             steps {
-                bat 'docker push abdulwasay085/chat-app:latest'
+                bat 'docker push abdulwasay064/chat-app:latest'
             }
         }
     }
